@@ -22,9 +22,16 @@ package org.zaproxy.addon.simpleexample;
 import java.awt.CardLayout;
 import java.awt.Font;
 import java.io.File;
+import java.io.FileWriter;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
 import javax.swing.ImageIcon;
 import javax.swing.JTextPane;
+
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.parosproxy.paros.Constant;
@@ -32,6 +39,7 @@ import org.parosproxy.paros.extension.AbstractPanel;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
 import org.parosproxy.paros.view.View;
+import org.zaproxy.zap.extension.brk.impl.http.ProxyListenerBreak;
 import org.zaproxy.zap.utils.FontUtils;
 import org.zaproxy.zap.view.ZapMenuItem;
 
@@ -63,18 +71,24 @@ public class ExtensionSimpleExample extends ExtensionAdaptor {
             new ImageIcon(ExtensionSimpleExample.class.getResource(RESOURCES + "/cake.png"));
 
     private static final String EXAMPLE_FILE = "example/ExampleFile.txt";
+    private static final String URL_FILE = "example/Known_URL.txt";
 
     private ZapMenuItem menuExample;
     private RightClickMsgMenu popupMsgMenuExample;
     private AbstractPanel statusPanel;
+    private SimpleBreak breaker;
 
     private SimpleExampleAPI api;
+
+    private List<String> knownUrlList;
 
     private static final Logger LOGGER = LogManager.getLogger(ExtensionSimpleExample.class);
 
     public ExtensionSimpleExample() {
         super(NAME);
         setI18nPrefix(PREFIX);
+        breaker = new SimpleBreak(this);
+
     }
 
     @Override
@@ -83,6 +97,12 @@ public class ExtensionSimpleExample extends ExtensionAdaptor {
 
         this.api = new SimpleExampleAPI();
         extensionHook.addApiImplementor(this.api);
+        extensionHook.addProxyListener(this.breaker);
+
+//        knownUrlList = new ArrayList<>();
+        knownUrlList = new ArrayList<>(Arrays.asList("www.google.com"));
+
+        createOrLoadUrlFile();
 
         // As long as we're not running as a daemon
         if (getView() != null) {
@@ -90,6 +110,7 @@ public class ExtensionSimpleExample extends ExtensionAdaptor {
             extensionHook.getHookMenu().addPopupMenuItem(getPopupMsgMenuExample());
             extensionHook.getHookView().addStatusPanel(getStatusPanel());
         }
+
     }
 
     @Override
@@ -135,14 +156,65 @@ public class ExtensionSimpleExample extends ExtensionAdaptor {
                     e -> {
                         // This is where you do what you want to do.
                         // In this case we'll just show a popup message.
+                        exportToUrlFile();
                         View.getSingleton()
-                                .showMessageDialog(
-                                        Constant.messages.getString(PREFIX + ".topmenu.tools.msg"));
+                                .showMessageDialog("Exported to url file");
                         // And display a file included with the add-on in the Output tab
-                        displayFile(EXAMPLE_FILE);
                     });
         }
         return menuExample;
+    }
+
+    private void createOrLoadUrlFile() {
+
+        this.breaker.logToOutput("Start CreateOrLoad url file");
+
+        LOGGER.log(Level.INFO, "Start CreateOrLoad url file");
+
+        try {
+            File f = new File(Constant.getZapHome(), URL_FILE);
+            if (f.createNewFile()) {
+                LOGGER.log(Level.INFO,"URL file not exists, create URL file");
+            } else {
+                LOGGER.log(Level.INFO,"URL exists, loading url file");
+            }
+
+            Scanner myReader = new Scanner(f);
+            while (myReader.hasNextLine()) {
+                String data = myReader.nextLine();
+                knownUrlList.add(data);
+                LOGGER.log(Level.INFO,"Loaded: " + data);
+            }
+            myReader.close();
+
+        } catch (Exception e) {
+            this.breaker.logToOutput(e.getMessage());
+        }
+    }
+
+    private void exportToUrlFile() {
+
+        this.breaker.logToOutput("Exporting to url file");
+
+        try {
+            File f = new File(Constant.getZapHome(), URL_FILE);
+            if (f.createNewFile()) {
+                this.breaker.logToOutput("URL file not exists, create URL file");
+            } else {
+                this.breaker.logToOutput("URL exists, updating url file");
+            }
+
+            FileWriter myWriter = new FileWriter(f);
+            for(String url: knownUrlList) {
+                myWriter.write(url + "\n");
+                this.breaker.logToOutput("Written: " + url);
+            }
+            myWriter.close();
+            this.breaker.logToOutput("written " + knownUrlList.size() + " urls to url file");
+
+        } catch (Exception e) {
+            this.breaker.logToOutput(e.getMessage());
+        }
     }
 
     private void displayFile(String file) {
@@ -180,6 +252,16 @@ public class ExtensionSimpleExample extends ExtensionAdaptor {
                             this, Constant.messages.getString(PREFIX + ".popup.title"));
         }
         return popupMsgMenuExample;
+    }
+
+//    private SimpleBreak getBreaker() {
+//        breaker = new SimpleBreak(this);
+//        return breaker;
+//    }
+
+
+    public List<String> getKnownUrlList() {
+        return knownUrlList;
     }
 
     @Override
