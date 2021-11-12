@@ -1,3 +1,0 @@
-  - type: graphql                      # GraphQL definition import
-    parameters:
-      endpoint:                        # String: the endpoint URL, default: null, no schema is imported

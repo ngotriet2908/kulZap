@@ -25,8 +25,18 @@ public class SimpleBreak implements ProxyListener {
 
     @Override
     public boolean onHttpRequestSend(HttpMessage msg) {
-        logToOutput("Request > Host: " + msg.getRequestHeader().getHostName() + ", isGood: " + isGood(msg) + ", Url: " + msg.getRequestHeader().getURI().toString());
-//        return isGood(msg);
+
+//        boolean isGood = false;
+//        String ref = msg.getRequestHeader().getHeader("Referer");
+//        if (ref != null) {
+//            ref = ref.replace("https://","").replace("/","");
+//            logToOutput("Request > Host: " + msg.getRequestHeader().getHostName() + ", isGood: " + isHostnameGood(ref) + ", Ref: " + ref);
+//            isGood = isHostnameGood(ref);
+//        } else {
+//            logToOutput("Request > Host: " + msg.getRequestHeader().getHostName() + ", isGood: " + isGood(msg));
+//            isGood =  isHostnameGood(msg.getRequestHeader().getHostName());
+//        }
+
         return true;
     }
 
@@ -34,6 +44,8 @@ public class SimpleBreak implements ProxyListener {
 
     @Override
     public boolean onHttpResponseReceive(HttpMessage msg) {
+
+
         return true;
     }
 
@@ -48,6 +60,10 @@ public class SimpleBreak implements ProxyListener {
             View.getSingleton().getOutputPanel().append(msg + "\n");
             View.getSingleton().getOutputPanel().setTabFocus();
         }
+    }
+
+    public boolean isHostnameGood(String hostname) {
+        return this.extension.getKnownUrlList().contains(hostname);
     }
 
     public boolean isGood(HttpMessage msg) {

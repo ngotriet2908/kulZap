@@ -1,8 +1,0 @@
-type Query {
-  plot (point: Point2D): Boolean
-}
-
-input Point2D {
-  x: Float
-  y: Float
-}

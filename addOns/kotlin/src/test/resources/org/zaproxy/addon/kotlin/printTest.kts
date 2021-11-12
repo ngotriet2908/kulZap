@@ -1,2 +1,0 @@
-println("ZAP")
-print("ZAP")

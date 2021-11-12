@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import javax.swing.ImageIcon;
@@ -71,6 +70,7 @@ public class ExtensionSimpleExample extends ExtensionAdaptor {
             new ImageIcon(ExtensionSimpleExample.class.getResource(RESOURCES + "/cake.png"));
 
     private static final String EXAMPLE_FILE = "example/ExampleFile.txt";
+    private static final String POPULAR_URLS_FILE = "example/popularUrls.txt";
     private static final String URL_FILE = "example/Known_URL.txt";
 
     private ZapMenuItem menuExample;
@@ -100,7 +100,7 @@ public class ExtensionSimpleExample extends ExtensionAdaptor {
         extensionHook.addProxyListener(this.breaker);
 
 //        knownUrlList = new ArrayList<>();
-        knownUrlList = new ArrayList<>(Arrays.asList("www.google.com"));
+        knownUrlList = new ArrayList<>();
 
         createOrLoadUrlFile();
 
@@ -175,17 +175,26 @@ public class ExtensionSimpleExample extends ExtensionAdaptor {
             File f = new File(Constant.getZapHome(), URL_FILE);
             if (f.createNewFile()) {
                 LOGGER.log(Level.INFO,"URL file not exists, create URL file");
+
+                File ff = new File(Constant.getZapHome(), POPULAR_URLS_FILE);
+                Scanner myReader = new Scanner(ff);
+                while (myReader.hasNextLine()) {
+                    String data = myReader.nextLine().toLowerCase();
+                    knownUrlList.add(data);
+                    LOGGER.log(Level.INFO,"Loaded popular urls: " + data);
+                }
+                myReader.close();
+
             } else {
                 LOGGER.log(Level.INFO,"URL exists, loading url file");
+                Scanner myReader = new Scanner(f);
+                while (myReader.hasNextLine()) {
+                    String data = myReader.nextLine();
+                    knownUrlList.add(data);
+                    LOGGER.log(Level.INFO,"Loaded: " + data);
+                }
+                myReader.close();
             }
-
-            Scanner myReader = new Scanner(f);
-            while (myReader.hasNextLine()) {
-                String data = myReader.nextLine();
-                knownUrlList.add(data);
-                LOGGER.log(Level.INFO,"Loaded: " + data);
-            }
-            myReader.close();
 
         } catch (Exception e) {
             this.breaker.logToOutput(e.getMessage());
