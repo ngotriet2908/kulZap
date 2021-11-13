@@ -72,6 +72,7 @@ public class ExtensionSimpleExample extends ExtensionAdaptor {
     private static final String EXAMPLE_FILE = "example/ExampleFile.txt";
     private static final String POPULAR_URLS_FILE = "example/popularUrls.txt";
     private static final String URL_FILE = "example/Known_URL.txt";
+    public static final String HTML_TEMPLATE = "example/warning_page.html";
 
     private ZapMenuItem menuExample;
     private RightClickMsgMenu popupMsgMenuExample;
