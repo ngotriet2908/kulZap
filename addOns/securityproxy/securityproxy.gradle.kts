@@ -16,3 +16,6 @@ crowdin {
         tokens.put("%helpPath%", resourcesPath)
     }
 }
+dependencies {
+    testImplementation(project(":testutils"))
+}

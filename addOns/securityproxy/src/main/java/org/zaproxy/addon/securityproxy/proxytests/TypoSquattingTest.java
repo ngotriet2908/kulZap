@@ -2,7 +2,11 @@ package org.zaproxy.addon.securityproxy.proxytests;
 
 import org.parosproxy.paros.network.HttpMessage;
 import org.zaproxy.addon.securityproxy.ExtensionSecurityProxy;
-import org.zaproxy.addon.securityproxy.proxytests.constraints.*;
+import org.zaproxy.addon.securityproxy.proxytests.constraints.AdjSwappedCharacterConstraint;
+import org.zaproxy.addon.securityproxy.proxytests.constraints.ExtraCharacterConstraint;
+import org.zaproxy.addon.securityproxy.proxytests.constraints.MissingCharacterConstraint;
+import org.zaproxy.addon.securityproxy.proxytests.constraints.ReplacedCharacterConstraint;
+import org.zaproxy.addon.securityproxy.proxytests.constraints.TypoSquattingConstraint;
 
 import java.util.List;
 
@@ -22,6 +26,11 @@ public class TypoSquattingTest extends ProxyTest{
 
     @Override
     public boolean isSafe(HttpMessage msg) {
+        return isSafeWithReason(msg).equals("safe");
+    }
+
+
+    private String isSafeWithReason(HttpMessage msg) {
         String ref = msg.getRequestHeader().getHeader("Referer");
         String origin = msg.getRequestHeader().getHeader("Origin");
         String testHostName;
@@ -34,13 +43,12 @@ public class TypoSquattingTest extends ProxyTest{
             testHostName = msg.getRequestHeader().getHostName();
         }
 
-        for(var constraint : constraints) {
-            for(var knownHostName : super.proxy.getKnownUrlList())
+        for(TypoSquattingConstraint constraint : constraints) {
+            for(String knownHostName : super.proxy.getKnownUrlList())
                 if (!constraint.passedConstraint(testHostName, knownHostName))
-                    return false;
+                    return knownHostName;
         }
-
-        return true;
+        return "safe";
     }
 
     @Override
