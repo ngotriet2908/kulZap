@@ -62,7 +62,7 @@ public class ConstraintTests {
     }
 
     @org.junit.jupiter.params.ParameterizedTest
-    @ValueSource(strings = {"something_else","xabcdex","abcxd"})
+    @ValueSource(strings = {"something_else","baced","baxde"})
     void AdjSwappedCharacterFalseTest(String typo) {
         String original = "abcde";
         TypoSquattingConstraint constraint = new AdjSwappedCharacterConstraint();
