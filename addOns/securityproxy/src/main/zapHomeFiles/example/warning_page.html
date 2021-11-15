@@ -5,23 +5,39 @@
     <title>Warning</title>
 </head>
 <body>
-  <h2>The page you are attempting to proceed is violating the proxy rules</h2>
-  <button onclick="sendPostRequest()">Click here to proceed to [TypoPage]</button>
+    <h2>Warning: Typo squatting constraints violated</h2>
+    <h4>The page you are attempting to proceed is violating the Typo Squatting constraints</h4>
+    <h4>Are you trying to access [OriginPage]</h4>
+    <button onclick="sendPostRequest()">Click here to proceed to [TypoHost]</button>
+    <button onclick="goToOrigin()">Click here to proceed to [OriginPage]</button>
 
-  <script>
-      function sendPostRequest() {
-          const xmlHttp = new XMLHttpRequest();
-          xmlHttp.onreadystatechange = function() {
-              if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
-                  console.log("Redirecting")
-                  window.location.href = "[TypoPage]"
-                  location.reload()
-              }
-          }
-          xmlHttp.open("GET", "https://[TypoHost]/zapgroup8addtolegithost", true) // true for asynchronous
-          xmlHttp.send(null);
-      }
-  </script>
+    <script>
+        function sendPostRequest() {
+            const xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function() {
+                if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+                    console.log("Redirecting")
+                    // window.location.href = "[TypoPage]"
+                    location.reload()
+                }
+            }
+            xmlHttp.open("GET", "https://[TypoHost]/zapgroup8addtolegithost", true) // true for asynchronous
+            xmlHttp.send(null);
+        }
+
+        function goToOrigin() {
+            const xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function() {
+                if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+                    console.log("Redirecting")
+                    window.location.href = "https://[OriginPage]"
+                }
+            }
+            xmlHttp.open("GET", "https://[TypoHost]/zapgroup8addredirect;[OriginPage]", true) // true for asynchronous
+            xmlHttp.send(null);
+
+        }
+    </script>
 
 </body>
 </html>

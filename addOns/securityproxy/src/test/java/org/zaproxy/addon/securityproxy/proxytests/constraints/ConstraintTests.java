@@ -59,6 +59,8 @@ public class ConstraintTests {
         String original = "abcde";
         TypoSquattingConstraint constraint = new AdjSwappedCharacterConstraint();
         Assertions.assertTrue(constraint.passedConstraint(original,typo));
+        Assertions.assertTrue(constraint.passedConstraint("www.youtube.com","www.google.com"));
+
     }
 
     @org.junit.jupiter.params.ParameterizedTest

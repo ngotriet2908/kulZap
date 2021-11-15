@@ -22,11 +22,15 @@ package org.zaproxy.addon.securityproxy;
 import java.awt.CardLayout;
 import java.awt.Font;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JTextPane;
 
@@ -38,6 +42,7 @@ import org.parosproxy.paros.extension.AbstractPanel;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
 import org.parosproxy.paros.view.View;
+import org.zaproxy.addon.securityproxy.proxytests.Website;
 import org.zaproxy.zap.extension.brk.impl.http.ProxyListenerBreak;
 import org.zaproxy.zap.utils.FontUtils;
 import org.zaproxy.zap.view.ZapMenuItem;
@@ -72,7 +77,9 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
     private static final String EXAMPLE_FILE = "example/ExampleFile.txt";
     private static final String POPULAR_URLS_FILE = "example/popularUrls.txt";
     private static final String URL_FILE = "example/Known_URL.txt";
+    private static final String WEBSITE_FILE = "example/website.tmp";
     public static final String HTML_TEMPLATE = "example/warning_page.html";
+    public static final String REDIRECT_HTML = "example/redirectPage.html";
 
     private ZapMenuItem menuExample;
     private RightClickMsgMenu popupMsgMenuExample;
@@ -81,7 +88,10 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
 
 //    private SimpleExampleAPI api;
 
-    private List<String> knownUrlList;
+//    private List<String> knownUrlList;
+
+    private List<Website> knownWebsites;
+    private List<Website> typoWebsites;
 
     private static final Logger LOGGER = LogManager.getLogger(ExtensionSecurityProxy.class);
 
@@ -101,7 +111,10 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
         extensionHook.addProxyListener(this.listener);
 
 //        knownUrlList = new ArrayList<>();
-        knownUrlList = new ArrayList<>();
+//        knownUrlList = new ArrayList<>();
+
+        knownWebsites = new ArrayList<>();
+        typoWebsites = new ArrayList<>();
 
         createOrLoadUrlFile();
 
@@ -168,33 +181,51 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
 
     private void createOrLoadUrlFile() {
 
-        this.listener.logToOutput("Start CreateOrLoad url file");
-
         LOGGER.log(Level.INFO, "Start CreateOrLoad url file");
 
         try {
-            File f = new File(Constant.getZapHome(), URL_FILE);
+            File f = new File(Constant.getZapHome(), WEBSITE_FILE);
             if (f.createNewFile()) {
                 LOGGER.log(Level.INFO,"URL file not exists, create URL file");
 
-                File ff = new File(Constant.getZapHome(), POPULAR_URLS_FILE);
-                Scanner myReader = new Scanner(ff);
-                while (myReader.hasNextLine()) {
-                    String data = myReader.nextLine().toLowerCase();
-                    knownUrlList.add(data);
-                    LOGGER.log(Level.INFO,"Loaded popular urls: " + data);
-                }
-                myReader.close();
-
             } else {
                 LOGGER.log(Level.INFO,"URL exists, loading url file");
-                Scanner myReader = new Scanner(f);
-                while (myReader.hasNextLine()) {
-                    String data = myReader.nextLine();
-                    knownUrlList.add(data);
-                    LOGGER.log(Level.INFO,"Loaded: " + data);
+                try {
+                    FileInputStream fis = new FileInputStream(f);
+                    ObjectInputStream ois = new ObjectInputStream(fis);
+
+                    Object obj = ois.readObject();
+                    LOGGER.log(Level.INFO, obj);
+                    ArrayList<?> ar = (ArrayList<?>) obj;
+                    List<Website> websites = new ArrayList<>();
+                    LOGGER.log(Level.INFO, "ar size: " + ar.size());
+
+                    for (Object x : ar) {
+                        websites.add((Website) x);
+                    }
+
+                    for(Website web: websites) {
+                        LOGGER.log(Level.INFO, "Loading: " + web.toString());
+                    }
+                    LOGGER.log(Level.INFO, "Websites size: " + websites.size());
+
+                    this.knownWebsites = websites
+                            .stream()
+                            .filter(website -> website.getDirectedWebsite() == null)
+                            .collect(Collectors.toList());
+
+                    this.typoWebsites = websites
+                            .stream()
+                            .filter(website -> website.getDirectedWebsite() != null)
+                            .collect(Collectors.toList());
+                    ois.close();
+
+
+                } catch(Exception e) {
+                    this.knownWebsites = new ArrayList<>();
+                    this.typoWebsites = new ArrayList<>();
                 }
-                myReader.close();
+
             }
 
         } catch (Exception e) {
@@ -207,53 +238,39 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
         this.listener.logToOutput("Exporting to url file");
 
         try {
-            File f = new File(Constant.getZapHome(), URL_FILE);
+            File f = new File(Constant.getZapHome(), WEBSITE_FILE);
             if (f.createNewFile()) {
-                this.listener.logToOutput("URL file not exists, create URL file");
-            } else {
-                this.listener.logToOutput("URL exists, updating url file");
-            }
+                LOGGER.log(Level.INFO,"URL file not exists, create URL file");
 
-            FileWriter myWriter = new FileWriter(f);
-            for(String url: knownUrlList) {
-                myWriter.write(url + "\n");
-                this.listener.logToOutput("Written: " + url);
+            } else {
+                LOGGER.log(Level.INFO,"URL exists, loading url file");
+                try {
+                    FileOutputStream fos = new FileOutputStream(f);
+                    ObjectOutputStream oos = new ObjectOutputStream(fos);
+
+                    List<Website> websites = new ArrayList<>();
+                    websites.addAll(this.typoWebsites);
+                    websites.addAll(this.knownWebsites);
+
+                    oos.writeObject(websites);
+                    oos.close();
+
+                    for(Website web: websites) {
+                        LOGGER.log(Level.INFO, "Writing: " + web.toString());
+                    }
+
+                } catch(Exception e) {
+                    this.knownWebsites = new ArrayList<>();
+                    this.typoWebsites = new ArrayList<>();
+                }
+
             }
-            myWriter.close();
-            this.listener.logToOutput("written " + knownUrlList.size() + " urls to url file");
 
         } catch (Exception e) {
             this.listener.logToOutput(e.getMessage());
         }
     }
 
-    private void displayFile(String file) {
-        if (!View.isInitialised()) {
-            // Running in daemon mode, shouldnt have been called
-            return;
-        }
-        try {
-            File f = new File(Constant.getZapHome(), file);
-            if (!f.exists()) {
-                // This is something the user should know, so show a warning dialog
-                View.getSingleton()
-                        .showWarningDialog(
-                                Constant.messages.getString(
-                                        ExtensionSecurityProxy.PREFIX + ".error.nofile",
-                                        f.getAbsolutePath()));
-                return;
-            }
-            // Quick way to read a small text file
-            String contents = new String(Files.readAllBytes(f.toPath()));
-            // Write to the output panel
-            View.getSingleton().getOutputPanel().append(contents);
-            // Give focus to the Output tab
-            View.getSingleton().getOutputPanel().setTabFocus();
-        } catch (Exception e) {
-            // Something unexpected went wrong, write the error to the log
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
 
     private RightClickMsgMenu getPopupMsgMenuExample() {
         if (popupMsgMenuExample == null) {
@@ -264,14 +281,52 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
         return popupMsgMenuExample;
     }
 
-//    private SimpleBreak getlistener() {
-//        breaker = new SimpleBreak(this);
-//        return breaker;
-//    }
-
 
     public List<String> getKnownUrlList() {
-        return knownUrlList;
+        return this.knownWebsites
+                .stream()
+                .map(Website::getHost)
+                .collect(Collectors.toList());
+    }
+
+    public void addTypoHost(String host, Website origin) {
+        this.typoWebsites.add(new Website(host, origin));
+    }
+
+    public boolean addKnownHost(String host) {
+        for (Website web: this.knownWebsites) {
+            if (web.getHost().equals(host)) {
+                return false;
+            }
+        }
+        this.knownWebsites.add(new Website(host));
+        return true;
+    }
+
+    public Website getKnownWebsite(String host) {
+        for(Website web: this.knownWebsites) {
+            if (web.getHost().equals(host)) {
+                return web;
+            }
+        }
+        return null;
+    }
+
+    public boolean isTypoWebsite(String host) {
+        for(Website web: this.typoWebsites) {
+            if (web.getHost().equals(host)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public List<Website> getKnownWebsites() {
+        return knownWebsites;
+    }
+
+    public List<Website> getTypoWebsites() {
+        return typoWebsites;
     }
 
     @Override

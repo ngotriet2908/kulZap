@@ -7,7 +7,7 @@ public class AdjSwappedCharacterConstraint implements TypoSquattingConstraint{
     @Override
     public boolean passedConstraint(String original, String typo) {
         int n=original.length();
-        if (! (typo.length()==n)) return false;
+        if (typo.length() != n) return false;
         int nError = 0;
         for (int i = 0; i < n-1; i++) {
             if (!(original.charAt(i)==typo.charAt(i))) {
@@ -21,4 +21,5 @@ public class AdjSwappedCharacterConstraint implements TypoSquattingConstraint{
         }
         return nError == 1;
     }
+
 }

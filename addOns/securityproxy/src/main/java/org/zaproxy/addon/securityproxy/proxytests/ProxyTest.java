@@ -12,5 +12,5 @@ public abstract class ProxyTest {
 
     public abstract boolean isSafe(HttpMessage msg);
     public abstract String getTestName();
-    public abstract String getWarningPage();
+    public abstract String getWarningPage(String... args);
 }
