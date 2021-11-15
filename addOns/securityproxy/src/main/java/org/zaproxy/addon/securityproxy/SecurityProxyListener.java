@@ -56,15 +56,11 @@ public class SecurityProxyListener implements ProxyListener {
 
         try {
             boolean isGood = this.typoSquattingTest.isSafe(msg);
+
+//            Check if the hostname is in the saved Typo list (if yes, then extract the redirect host then redirect the user)
             if (!isGood) {
                 for (Website web : this.extension.getTypoWebsites()) {
                     if (web.getHost().equals(msg.getRequestHeader().getHostName())) {
-//                        logToOutput("INFO > Typo website: " + web.getHost() + " -> " + web.getDirectedWebsite().getHost());
-//                        HttpRequestHeader reqHeader = null;
-//                        URI uri = new URI("https://" + web.getDirectedWebsite().getHost(),true);
-//                        reqHeader = new HttpRequestHeader("GET",uri,"HTTP/1.1");
-//                        msg.setRequestHeader(reqHeader);
-
                         msg.setResponseHeader(new HttpResponseHeader(
                                 "HTTP/1.1 200 OK"
                                         + HttpHeader.CRLF
@@ -83,7 +79,6 @@ public class SecurityProxyListener implements ProxyListener {
             }
 
             String isGoodHostName = this.typoSquattingTest.extractSearchHost(msg);
-
             String contentType = msg.getRequestHeader().getHeader("Accept");
             contentType = (contentType == null) ? "null" : contentType;
             boolean containsHTML = contentType.contains(HTML_CONTENT_TYPE);
@@ -99,6 +94,7 @@ public class SecurityProxyListener implements ProxyListener {
             );
 
 
+            //  If request contains pre-made keywords ADD_TO_LEGIT_HOST (add the host to legit host) -> then save the host to known Host list
             if (msg.getRequestHeader().getURI().toString().contains(ADD_TO_LEGIT_HOST)) {
                 String typoHost = msg.getRequestHeader().getURI().toString()
                         .replace(ADD_TO_LEGIT_HOST.toLowerCase(Locale.ROOT), "")
@@ -121,6 +117,7 @@ public class SecurityProxyListener implements ProxyListener {
                 return true;
             }
 
+            //  If request contains pre-made keywords ADD_REDIRECT_HOST (add typo host with redirect host preference) -> then save the preference
             if (msg.getRequestHeader().getURI().toString().contains(ADD_REDIRECT_HOST)) {
                 String params = msg.getRequestHeader().getURI().toString()
                         .replace(ADD_REDIRECT_HOST.toLowerCase(Locale.ROOT), "")
@@ -145,8 +142,10 @@ public class SecurityProxyListener implements ProxyListener {
                 return true;
             }
 
-
+            // If the page contains HTML -> usually when the user enter a link in the address bar
             if (containsHTML) {
+
+                // If the hostname is good and not a typo -> add the host to knownHost list
                 if (isGood && !this.extension.isTypoWebsite(isGoodHostName)) {
                     if (this.extension.addKnownHost(isGoodHostName)) {
                         logToOutput("Operation > Add new KnownHost 2: " + isGoodHostName);
@@ -156,6 +155,8 @@ public class SecurityProxyListener implements ProxyListener {
                     return true;
                 }
 
+
+                // Otherwise, the host failed the typo test -> send the warning page
                 String originalHost = this.typoSquattingTest.isSafeWithReason(msg);
 
                 msg.setResponseHeader(new HttpResponseHeader(
