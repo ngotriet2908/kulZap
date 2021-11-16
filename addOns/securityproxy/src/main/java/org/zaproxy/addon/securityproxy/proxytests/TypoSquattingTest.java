@@ -79,7 +79,7 @@ public class TypoSquattingTest extends ProxyTest {
             }
 
             for(TypoSquattingConstraint constraint : constraints) {
-                if (constraint.passedConstraint(testHostName, knownHostName)) {
+                if (constraint.passedConstraint(testHostName, knownHostName)) { //swap testHostName and knownHostName I think (results will be same)
                     LOGGER.log(Level.INFO, "Constraint " +
                             constraint.getClass().getName() +
                             "Fail: " + testHostName + " - " + knownHostName);
