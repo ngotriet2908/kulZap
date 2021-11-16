@@ -63,8 +63,8 @@ public class SecurityProxyListener implements ProxyListener {
      * -- if no violations found then allow the user to access the page
      * -- show the user a warning page telling them that they violate the Typo Squatting test
      * - For other requests, allow if the hostname pass the Tests
-     * @param msg
-     * @return
+     * @param msg user requests
+     * @return the unmodified request if the hostname is safe and modified in case of violated request
      */
     @Override
     public boolean onHttpRequestSend(HttpMessage msg) {
@@ -82,7 +82,7 @@ public class SecurityProxyListener implements ProxyListener {
                                         + "Content-Type: text/html;charset=utf-8"
                                         + HttpHeader.CRLF
                                         + "Content-Language: en"));
-                        String html = this.typoSquattingTest.getRedirectPage();
+                        String html = this.getTypoSquattingTest().getRedirectPage();
                         msg.setResponseBody(html.replace(REDIRECT_HOST, "https://" + web.getDirectedWebsite().getHost()));
                         msg.getResponseHeader().setContentLength(msg.getResponseBody().length());
                         msg.setTimeSentMillis(new Date().getTime());
@@ -231,5 +231,9 @@ public class SecurityProxyListener implements ProxyListener {
      */
     public ExtensionSecurityProxy getExtension() {
         return extension;
+    }
+
+    public TypoSquattingTest getTypoSquattingTest() {
+        return typoSquattingTest;
     }
 }

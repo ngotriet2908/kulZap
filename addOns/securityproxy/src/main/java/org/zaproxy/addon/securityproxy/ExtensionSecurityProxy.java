@@ -87,6 +87,7 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
         super(NAME);
         setI18nPrefix(PREFIX);
         listener = new SecurityProxyListener(this);
+        websites = new ArrayList<>();
 
     }
 
