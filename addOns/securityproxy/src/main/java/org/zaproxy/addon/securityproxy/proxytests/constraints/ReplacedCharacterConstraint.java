@@ -1,7 +1,15 @@
 package org.zaproxy.addon.securityproxy.proxytests.constraints;
 
+/**
+ * A constraint to check if a typo where one character is replaced with another was made.
+ */
 public class ReplacedCharacterConstraint implements TypoSquattingConstraint{
 
+    /**
+     * @param original The string to be checked against.
+     * @param typo     The potential typo.
+     * @return true if exactly one character in the typo string differs from the original string.
+     */
     @Override
     public boolean passedConstraint(String original, String typo) {
         int n=original.length();

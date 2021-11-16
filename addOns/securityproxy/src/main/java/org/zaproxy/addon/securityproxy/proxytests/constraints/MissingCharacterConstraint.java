@@ -2,8 +2,16 @@ package org.zaproxy.addon.securityproxy.proxytests.constraints;
 
 import org.zaproxy.addon.securityproxy.proxytests.TypoSquattingTest;
 
+/**
+ * A constraint to check if a typo where one character is missing was made.
+ */
 public class MissingCharacterConstraint implements TypoSquattingConstraint{
 
+    /**
+     * @param original The string to be checked against.
+     * @param typo     The potential typo.
+     * @return true if there is a single character removed from the typo string compared to the original string
+     */
     @Override
     public boolean passedConstraint(String original, String typo) {
         int n=original.length();

@@ -2,8 +2,16 @@ package org.zaproxy.addon.securityproxy.proxytests.constraints;
 
 import org.zaproxy.addon.securityproxy.proxytests.TypoSquattingTest;
 
+/**
+ * A constraint to check if a typo where two adjacent characters are swapped was made.
+ */
 public class AdjSwappedCharacterConstraint implements TypoSquattingConstraint{
 
+    /**
+     * @param original The string to be checked against.
+     * @param typo     The potential typo.
+     * @return true if the typo string is identical to the original string except for exactly two adjacent characters being swapped.
+     */
     @Override
     public boolean passedConstraint(String original, String typo) {
         int n=original.length();
