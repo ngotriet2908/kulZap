@@ -18,7 +18,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Scanner;
 
-public class TypoSquattingTest extends ProxyTest{
+public class TypoSquattingTest extends ProxyTest {
 
     private final List<TypoSquattingConstraint> constraints;
 
@@ -28,8 +28,8 @@ public class TypoSquattingTest extends ProxyTest{
 
     private static final Logger LOGGER = LogManager.getLogger(TypoSquattingTest.class);
 
-    public TypoSquattingTest(ExtensionSecurityProxy proxy) {
-        super(proxy);
+    public TypoSquattingTest(SecurityProxyListener listener) {
+        super(listener);
         constraints = List.of(
                 new AdjSwappedCharacterConstraint(),
                 new ExtraCharacterConstraint(),
@@ -50,7 +50,7 @@ public class TypoSquattingTest extends ProxyTest{
         String result1 = HOST_NAME_SAFE_RESULT;
         String result2 = HOST_NAME_SAFE_RESULT;
 
-        for(String knownHostName : super.proxy.getKnownUrlList()) {
+        for(String knownHostName : super.listener.getKnownUrlList()) {
             if (knownHostName.equals(testHostName)) {
                 return HOST_NAME_SAFE_RESULT;
             }
@@ -71,7 +71,7 @@ public class TypoSquattingTest extends ProxyTest{
         }
 
         testHostName = msg.getRequestHeader().getHostName();
-        for(String knownHostName : super.proxy.getKnownUrlList()) {
+        for(String knownHostName : super.listener.getKnownUrlList()) {
             if (knownHostName.equals(testHostName)) {
                 return HOST_NAME_SAFE_RESULT;
             }

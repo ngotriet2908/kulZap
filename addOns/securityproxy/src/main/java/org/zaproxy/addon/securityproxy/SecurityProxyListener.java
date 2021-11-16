@@ -20,6 +20,7 @@ import org.zaproxy.zap.extension.brk.ExtensionBreak;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -48,8 +49,18 @@ public class SecurityProxyListener implements ProxyListener {
          * when you actually do anything of use.
          */
         this.extension = extension;
-        this.typoSquattingTest = new TypoSquattingTest(this.extension);
+        this.typoSquattingTest = new TypoSquattingTest(this);
     }
+
+    public List<Website> getKnownWebsites() {
+        return this.extension.getKnownWebsites();
+    }
+
+    public List<Website> getTypoWebsites() {
+        return this.extension.getTypoWebsites();
+    }
+
+    public List<String> getKnownUrlList() {return this.extension.getKnownUrlList();}
 
     @Override
     public boolean onHttpRequestSend(HttpMessage msg) {

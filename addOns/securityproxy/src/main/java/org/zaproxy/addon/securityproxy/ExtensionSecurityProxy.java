@@ -117,7 +117,7 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
         typoWebsites = new ArrayList<>();
 
         createOrLoadUrlFile();
-
+//        this.listener.
         // As long as we're not running as a daemon
         if (getView() != null) {
             extensionHook.getHookMenu().addToolsMenuItem(getMenuExample());
