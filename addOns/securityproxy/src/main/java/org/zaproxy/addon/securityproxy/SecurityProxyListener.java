@@ -25,6 +25,10 @@ import java.util.Locale;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
+/**
+ * A custom proxy listener that process the requests from user and apply
+ * security constraint such as TypoSquatting Prevention
+ */
 public class SecurityProxyListener implements ProxyListener {
     // Should be the last one before the listener that saves the HttpMessage to
     // the DB, this way the HttpMessage will be correctly shown to the user (to
@@ -45,14 +49,23 @@ public class SecurityProxyListener implements ProxyListener {
     private TypoSquattingTest typoSquattingTest;
 
     public SecurityProxyListener(ExtensionSecurityProxy extension) {
-        /*
-         * This is how you can pass in your extension, which you may well need to use
-         * when you actually do anything of use.
-         */
         this.extension = extension;
         this.typoSquattingTest = new TypoSquattingTest(this);
     }
 
+    /**
+     * When a request is received, the method determind the following:
+     * - If the hostname is in the saved Typo list (if yes, then extract the redirect host then redirect the user)
+     * - If the user indicates in the request that they want to save a typo host as legitimate host -> then save the host to known Host list
+     * - If the user indicates in the request that they want to save a typo host with the intended host as preference
+     *      then save the preference and redirect the user in future requests
+     * - If the page contains HTML  (usually when the user enter a link in the address bar)
+     * -- if no violations found then allow the user to access the page
+     * -- show the user a warning page telling them that they violate the Typo Squatting test
+     * - For other requests, allow if the hostname pass the Tests
+     * @param msg
+     * @return
+     */
     @Override
     public boolean onHttpRequestSend(HttpMessage msg) {
 
@@ -69,7 +82,7 @@ public class SecurityProxyListener implements ProxyListener {
                                         + "Content-Type: text/html;charset=utf-8"
                                         + HttpHeader.CRLF
                                         + "Content-Language: en"));
-                        String html = getRedirectPage();
+                        String html = this.typoSquattingTest.getRedirectPage();
                         msg.setResponseBody(html.replace(REDIRECT_HOST, "https://" + web.getDirectedWebsite().getHost()));
                         msg.getResponseHeader().setContentLength(msg.getResponseBody().length());
                         msg.setTimeSentMillis(new Date().getTime());
@@ -186,7 +199,11 @@ public class SecurityProxyListener implements ProxyListener {
         return true;
     }
 
-
+    /**
+     * Allow all response to be forwarded to the user
+     * @param msg
+     * @return
+     */
     @Override
     public boolean onHttpResponseReceive(HttpMessage msg) {
         return true;
@@ -197,6 +214,10 @@ public class SecurityProxyListener implements ProxyListener {
         return PROXY_LISTENER_ORDER;
     }
 
+    /**
+     * Log to output in ZAP application
+     * @param msg
+     */
     public void logToOutput(String msg) {
         if (View.isInitialised()) {
             // Running in daemon mode, shouldnt have been called
@@ -205,22 +226,9 @@ public class SecurityProxyListener implements ProxyListener {
         }
     }
 
-    private String getRedirectPage() {
-        try {
-            File ff = new File(Constant.getZapHome(), ExtensionSecurityProxy.REDIRECT_HTML);
-            Scanner myReader = new Scanner(ff);
-            StringBuilder html_content = new StringBuilder();
-            while (myReader.hasNextLine()) {
-                html_content.append(myReader.nextLine()).append("\n");
-            }
-            myReader.close();
-            return html_content.toString();
-        } catch (Exception e) {
-            LOGGER.log(Level.ERROR, e.getMessage());
-        }
-        return "null";
-    }
-
+    /**
+     * @return return the ZAP extension for usage
+     */
     public ExtensionSecurityProxy getExtension() {
         return extension;
     }

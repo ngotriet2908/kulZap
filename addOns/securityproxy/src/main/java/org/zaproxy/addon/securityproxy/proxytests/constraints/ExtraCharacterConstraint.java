@@ -2,7 +2,7 @@ package org.zaproxy.addon.securityproxy.proxytests.constraints;
 
 import org.zaproxy.addon.securityproxy.proxytests.TypoSquattingTest;
 
-public class ExtraCharacterConstraint implements TypoSquattingConstraint {
+    public class ExtraCharacterConstraint implements TypoSquattingConstraint {
     
     @Override
     public boolean passedConstraint(String original, String typo) {

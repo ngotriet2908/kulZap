@@ -19,6 +19,12 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
+/**
+ * TypoSquatting Test is extended from ProxyTest
+ * Implement user story 8, typosquatting test will process
+ * through every requests to detect various constraints such as
+ * swap, replace, missing, addition.
+ */
 public class TypoSquattingTest extends ProxyTest {
 
     private final List<TypoSquattingConstraint> constraints;
@@ -29,6 +35,10 @@ public class TypoSquattingTest extends ProxyTest {
 
     private static final Logger LOGGER = LogManager.getLogger(TypoSquattingTest.class);
 
+    /**
+     * Create the TypoSquattingTest with the ProxyListener to pass on requests
+     * @param listener a ProxyListener
+     */
     public TypoSquattingTest(SecurityProxyListener listener) {
         super(listener);
         constraints = List.of(
@@ -39,12 +49,24 @@ public class TypoSquattingTest extends ProxyTest {
         );
     }
 
+    /**
+     * Determine whether the request is safe by trying
+     * constraints, if a constraint is violated, the method return false
+     * @param msg the http request from the user
+     * @return whether the request is violating any typosquatting constraints
+     */
     @Override
     public boolean isSafe(HttpMessage msg) {
         return isSafeWithReason(msg).equals(HOST_NAME_SAFE_RESULT);
     }
 
-
+    /**
+     * A more details way to determine whether the request violates any constraints
+     * If either the hostname from the request or its referer or origin violates a
+     * constraint, the method return the website that should have been the user intention
+     * @param msg the http request from the user
+     * @return safe when no violations found and intended website in case of violation
+     */
     public String isSafeWithReason(HttpMessage msg) {
         String testHostName = extractSearchHost(msg);
 
@@ -95,7 +117,11 @@ public class TypoSquattingTest extends ProxyTest {
         return result1;
     }
 
-
+    /**
+     * Return hostname from URI string
+     * @param uri uri
+     * @return hostname
+     */
     public String uriStringToHostName(String uri) {
         try {
             return new URI(uri, true, "UTF-8").getHost();
@@ -105,6 +131,11 @@ public class TypoSquattingTest extends ProxyTest {
         return null;
     }
 
+    /**
+     * Extract the request referrer or origin if exists
+     * @param msg the http request from the user
+     * @return hostname (or ref/ori if either exists)
+     */
     public String extractSearchHost(HttpMessage msg) {
         try {
             String ref = msg.getRequestHeader().getHeader("Referer");
@@ -127,11 +158,19 @@ public class TypoSquattingTest extends ProxyTest {
         return null;
     }
 
+    /**
+     * @return the typosquatting test name
+     */
     @Override
     public String getTestName() {
         return "Typosquatting";
     }
 
+    /**
+     * Return the warning page if the typosquatting constraints are violated
+     * @param args the typo host name that fails the constrains and the intended hostname
+     * @return html warning page in string
+     */
     @Override
     public String getWarningPage(String... args) {
         String typoHost = args[0];
@@ -155,12 +194,40 @@ public class TypoSquattingTest extends ProxyTest {
         return null;
     }
 
+    /**
+     * get an empty page that will redirect on load
+     * @return html of redirect page
+     */
+    public String getRedirectPage() {
+        try {
+            File ff = new File(Constant.getZapHome(), ExtensionSecurityProxy.REDIRECT_HTML);
+            Scanner myReader = new Scanner(ff);
+            StringBuilder html_content = new StringBuilder();
+            while (myReader.hasNextLine()) {
+                html_content.append(myReader.nextLine()).append("\n");
+            }
+            myReader.close();
+            return html_content.toString();
+        } catch (Exception e) {
+            LOGGER.log(Level.ERROR, e.getMessage());
+        }
+        return "null";
+    }
 
+    /**
+     * Add typo host name as a Website object for later use
+     * @param host typo host
+     * @param origin intended website
+     */
     public void addTypoHost(String host, Website origin) {
         this.listener.getExtension().getWebsites().add(new Website(host, origin));
     }
 
-
+    /**
+     * Add known host name as a Website object for later use
+     * @param host legitimate host
+     * @return whether the host exists or not
+     */
     public boolean addKnownHost(String host) {
         for (Website web: this.getKnownWebsites()) {
             if (web.getHost().equals(host)) {
@@ -171,6 +238,11 @@ public class TypoSquattingTest extends ProxyTest {
         return true;
     }
 
+    /**
+     * find legitimate website object from hostname
+     * @param host hostname
+     * @return legitimate website object of hostname
+     */
     public Website getKnownWebsite(String host) {
         for(Website web: this.getKnownWebsites()) {
             if (web.getHost().equals(host)) {
@@ -180,6 +252,10 @@ public class TypoSquattingTest extends ProxyTest {
         return null;
     }
 
+    /**
+     * @param host typo hostname
+     * @return whether the hostname belongs to any stored typo website object
+     */
     public boolean isTypoWebsite(String host) {
         for(Website web: this.getTypoWebsites()) {
             if (web.getHost().equals(host)) {
@@ -189,7 +265,9 @@ public class TypoSquattingTest extends ProxyTest {
         return false;
     }
 
-
+    /**
+     * @return a list of legitimate websites from storage
+     */
     public List<Website> getKnownWebsites() {
         return this.listener.getExtension().getWebsites()
                 .stream()
@@ -197,6 +275,9 @@ public class TypoSquattingTest extends ProxyTest {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * @return a list of typo websites from storage
+     */
     public List<Website> getTypoWebsites() {
         return this.listener.getExtension().getWebsites()
                 .stream()
@@ -204,6 +285,9 @@ public class TypoSquattingTest extends ProxyTest {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * @return a list of legitimate websites from storage as hostname
+     */
     public List<String> getKnownUrlList() {
         return this.getKnownWebsites()
                 .stream()

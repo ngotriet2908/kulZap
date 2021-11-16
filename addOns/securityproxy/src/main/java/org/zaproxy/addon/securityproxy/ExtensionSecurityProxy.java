@@ -52,20 +52,13 @@ import org.zaproxy.zap.utils.FontUtils;
 import org.zaproxy.zap.view.ZapMenuItem;
 
 /**
- * An example ZAP extension which adds a top level menu item, a pop up menu item and a status panel.
- *
- * <p>{@link ExtensionAdaptor} classes are the main entry point for adding/loading functionalities
- * provided by the add-ons.
- *
- * @see #hook(ExtensionHook)
+ * An Zap extension that implement typosquatting prevention.
  */
 public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionChangedListener {
 
     // The name is public so that other extensions can access it
     public static final String NAME = "ExtensionSecurityProxy";
 
-    // The i18n prefix, by default the package name - defined in one place to make it easier
-    // to copy and change this example
     protected static final String PREFIX = "securityProxy";
 
     /**
@@ -78,15 +71,11 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
     private static final ImageIcon ICON =
             new ImageIcon(ExtensionSecurityProxy.class.getResource(RESOURCES + "/cake.png"));
 
-    private static final String EXAMPLE_FILE = "example/ExampleFile.txt";
-    private static final String POPULAR_URLS_FILE = "example/popularUrls.txt";
-    private static final String URL_FILE = "example/Known_URL.txt";
     private static final String WEBSITE_FILE = "example/website.tmp";
     public static final String HTML_TEMPLATE = "example/warning_page.html";
     public static final String REDIRECT_HTML = "example/redirectPage.html";
 
     private ZapMenuItem menuExample;
-    private RightClickMsgMenu popupMsgMenuExample;
     private AbstractPanel statusPanel;
     private SecurityProxyListener listener;
 
@@ -101,6 +90,11 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
 
     }
 
+    /**
+     * initialize the extension meta-data when it is hooked to the ZAP application
+     * in this case establish variables and create or load the WebsiteFile from storage
+     * @param extensionHook extensionHook
+     */
     @Override
     public void hook(ExtensionHook extensionHook) {
         super.hook(extensionHook);
@@ -109,11 +103,10 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
         extensionHook.addSessionListener(this);
         websites = new ArrayList<>();
 
-        createOrLoadUrlFile();
+        createOrLoadWebsiteFile();
         // As long as we're not running as a daemon
         if (getView() != null) {
             extensionHook.getHookMenu().addToolsMenuItem(getMenuExample());
-            extensionHook.getHookMenu().addPopupMenuItem(getPopupMsgMenuExample());
             extensionHook.getHookView().addStatusPanel(getStatusPanel());
         }
 
@@ -137,6 +130,9 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
         // here (if the extension declares that can be unloaded, see above method).
     }
 
+    /**
+     * @return extension status panel
+     */
     private AbstractPanel getStatusPanel() {
         if (statusPanel == null) {
             statusPanel = new AbstractPanel();
@@ -154,6 +150,9 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
         return statusPanel;
     }
 
+    /**
+     * @return extension menu export functionality
+     */
     private ZapMenuItem getMenuExample() {
         if (menuExample == null) {
             menuExample = new ZapMenuItem(PREFIX + ".topmenu.tools.title");
@@ -162,7 +161,7 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
                     e -> {
                         // This is where you do what you want to do.
                         // In this case we'll just show a popup message.
-                        exportToUrlFile();
+                        exportToWebsiteFile();
                         View.getSingleton()
                                 .showMessageDialog("Exported to url file");
                         // And display a file included with the add-on in the Output tab
@@ -171,7 +170,11 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
         return menuExample;
     }
 
-    private void createOrLoadUrlFile() {
+    /**
+     * The method create the WEBSITE_FILE if not exists
+     * Load the stored Website objects from the storage
+     */
+    private void createOrLoadWebsiteFile() {
 
         LOGGER.log(Level.INFO, "Start CreateOrLoad url file");
 
@@ -218,7 +221,11 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
         }
     }
 
-    private void exportToUrlFile() {
+    /**
+     * The method create the WEBSITE_FILE if not exists
+     * Write the current Website objects from the storage
+     */
+    private void exportToWebsiteFile() {
 
         LOGGER.log(Level.INFO, "Start Exporting url file");
 
@@ -253,16 +260,6 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
         }
     }
 
-
-    private RightClickMsgMenu getPopupMsgMenuExample() {
-        if (popupMsgMenuExample == null) {
-            popupMsgMenuExample =
-                    new RightClickMsgMenu(
-                            this, Constant.messages.getString(PREFIX + ".popup.title"));
-        }
-        return popupMsgMenuExample;
-    }
-
     public List<Website> getWebsites() {
         return websites;
     }
@@ -272,9 +269,14 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
         return Constant.messages.getString(PREFIX + ".desc");
     }
 
+    /**
+     * When the application closes or user initiates another session
+     * export the current websites list to storage
+     * @param session
+     */
     @Override
     public void sessionChanged(Session session) {
-        exportToUrlFile();
+        exportToWebsiteFile();
     }
 
     @Override
