@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class SecurityProxyListener implements ProxyListener {
     // Should be the last one before the listener that saves the HttpMessage to
@@ -52,16 +53,6 @@ public class SecurityProxyListener implements ProxyListener {
         this.typoSquattingTest = new TypoSquattingTest(this);
     }
 
-    public List<Website> getKnownWebsites() {
-        return this.extension.getKnownWebsites();
-    }
-
-    public List<Website> getTypoWebsites() {
-        return this.extension.getTypoWebsites();
-    }
-
-    public List<String> getKnownUrlList() {return this.extension.getKnownUrlList();}
-
     @Override
     public boolean onHttpRequestSend(HttpMessage msg) {
 
@@ -70,7 +61,7 @@ public class SecurityProxyListener implements ProxyListener {
 
 //            Check if the hostname is in the saved Typo list (if yes, then extract the redirect host then redirect the user)
             if (!isGood) {
-                for (Website web : this.extension.getTypoWebsites()) {
+                for (Website web : this.typoSquattingTest.getTypoWebsites()) {
                     if (web.getHost().equals(msg.getRequestHeader().getHostName())) {
                         msg.setResponseHeader(new HttpResponseHeader(
                                 "HTTP/1.1 200 OK"
@@ -107,12 +98,12 @@ public class SecurityProxyListener implements ProxyListener {
 
             //  If request contains pre-made keywords ADD_TO_LEGIT_HOST (add the host to legit host) -> then save the host to known Host list
             if (msg.getRequestHeader().getURI().toString().contains(ADD_TO_LEGIT_HOST)) {
-                String typoHost = msg.getRequestHeader().getURI().toString()
+                String legitHost = msg.getRequestHeader().getURI().toString()
                         .replace(ADD_TO_LEGIT_HOST.toLowerCase(Locale.ROOT), "")
                         .replace("https://", "");
 
-                if (this.extension.addKnownHost(typoHost)) {
-                    logToOutput("Operation > Add new KnownHost 1: " + typoHost);
+                if (this.typoSquattingTest.addKnownHost(legitHost)) {
+                    logToOutput("Operation > Add new KnownHost 1: " + legitHost);
                 }
 
                 msg.setResponseHeader(new HttpResponseHeader(
@@ -137,7 +128,7 @@ public class SecurityProxyListener implements ProxyListener {
                 String typoHost = params.split(";")[0];
                 String originHost = params.split(";")[1];
 
-                this.extension.addTypoHost(typoHost, this.extension.getKnownWebsite(originHost));
+                this.typoSquattingTest.addTypoHost(typoHost, this.typoSquattingTest.getKnownWebsite(originHost));
                 logToOutput("Operation > Add Typo Redirect: " + typoHost + " -> " + originHost);
 
                 msg.setResponseHeader(new HttpResponseHeader(
@@ -157,8 +148,8 @@ public class SecurityProxyListener implements ProxyListener {
             if (containsHTML) {
 
                 // If the hostname is good and not a typo -> add the host to knownHost list
-                if (isGood && !this.extension.isTypoWebsite(isGoodHostName)) {
-                    if (this.extension.addKnownHost(isGoodHostName)) {
+                if (isGood && !this.typoSquattingTest.isTypoWebsite(isGoodHostName)) {
+                    if (this.typoSquattingTest.addKnownHost(isGoodHostName)) {
                         logToOutput("Operation > Add new KnownHost 2: " + isGoodHostName);
                     }
                     return true;
@@ -196,7 +187,6 @@ public class SecurityProxyListener implements ProxyListener {
     }
 
 
-
     @Override
     public boolean onHttpResponseReceive(HttpMessage msg) {
         return true;
@@ -231,38 +221,7 @@ public class SecurityProxyListener implements ProxyListener {
         return "null";
     }
 
-    public boolean isHostnameGood(HttpMessage msg) {
-        String ref = msg.getRequestHeader().getHeader("Referer");
-        String origin = msg.getRequestHeader().getHeader("Origin");
-
-        boolean resRef = false;
-        boolean resOrigin = false;
-        boolean resHost;
-
-
-        if (origin != null) {
-            for(String knownUrl: this.extension.getKnownUrlList()) {
-                if (origin.contains(knownUrl)) {
-                    resOrigin = true;
-                    break;
-                }
-            }
-        }
-
-        if (ref != null) {
-            for(String knownUrl: this.extension.getKnownUrlList()) {
-                if (ref.contains(knownUrl)) {
-                    resRef = true;
-                    break;
-                }
-            }
-        }
-        resHost = this.extension.getKnownUrlList().contains(msg.getRequestHeader().getHostName());
-        return resRef | resHost | resOrigin;
-    }
-
-    public boolean isGood(HttpMessage msg) {
-        String hostName = msg.getRequestHeader().getHostName();
-        return this.extension.getKnownUrlList().contains(hostName);
+    public ExtensionSecurityProxy getExtension() {
+        return extension;
     }
 }

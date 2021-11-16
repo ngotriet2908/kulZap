@@ -17,6 +17,7 @@ import org.zaproxy.addon.securityproxy.proxytests.constraints.TypoSquattingConst
 import java.io.File;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class TypoSquattingTest extends ProxyTest {
 
@@ -50,7 +51,7 @@ public class TypoSquattingTest extends ProxyTest {
         String result1 = HOST_NAME_SAFE_RESULT;
         String result2 = HOST_NAME_SAFE_RESULT;
 
-        for(String knownHostName : super.listener.getKnownUrlList()) {
+        for(String knownHostName : this.getKnownUrlList()) {
             if (knownHostName.equals(testHostName)) {
                 return HOST_NAME_SAFE_RESULT;
             }
@@ -71,7 +72,7 @@ public class TypoSquattingTest extends ProxyTest {
         }
 
         testHostName = msg.getRequestHeader().getHostName();
-        for(String knownHostName : super.listener.getKnownUrlList()) {
+        for(String knownHostName : this.getKnownUrlList()) {
             if (knownHostName.equals(testHostName)) {
                 return HOST_NAME_SAFE_RESULT;
             }
@@ -152,5 +153,61 @@ public class TypoSquattingTest extends ProxyTest {
             LOGGER.log(Level.ERROR, e.getMessage());
         }
         return null;
+    }
+
+
+    public void addTypoHost(String host, Website origin) {
+        this.listener.getExtension().getWebsites().add(new Website(host, origin));
+    }
+
+
+    public boolean addKnownHost(String host) {
+        for (Website web: this.getKnownWebsites()) {
+            if (web.getHost().equals(host)) {
+                return false;
+            }
+        }
+        this.listener.getExtension().getWebsites().add(new Website(host));
+        return true;
+    }
+
+    public Website getKnownWebsite(String host) {
+        for(Website web: this.getKnownWebsites()) {
+            if (web.getHost().equals(host)) {
+                return web;
+            }
+        }
+        return null;
+    }
+
+    public boolean isTypoWebsite(String host) {
+        for(Website web: this.getTypoWebsites()) {
+            if (web.getHost().equals(host)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public List<Website> getKnownWebsites() {
+        return this.listener.getExtension().getWebsites()
+                .stream()
+                .filter(website -> website.getDirectedWebsite() == null)
+                .collect(Collectors.toList());
+    }
+
+    public List<Website> getTypoWebsites() {
+        return this.listener.getExtension().getWebsites()
+                .stream()
+                .filter(website -> website.getDirectedWebsite() != null)
+                .collect(Collectors.toList());
+    }
+
+    public List<String> getKnownUrlList() {
+        return this.getKnownWebsites()
+                .stream()
+                .map(Website::getHost)
+                .collect(Collectors.toList());
     }
 }

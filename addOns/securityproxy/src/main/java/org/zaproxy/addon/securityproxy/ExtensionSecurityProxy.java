@@ -90,13 +90,6 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
     private AbstractPanel statusPanel;
     private SecurityProxyListener listener;
 
-//    private SimpleExampleAPI api;
-
-//    private List<String> knownUrlList;
-
-//    private List<Website> knownWebsites;
-//    private List<Website> typoWebsites;
-
     private List<Website> websites;
 
     private static final Logger LOGGER = LogManager.getLogger(ExtensionSecurityProxy.class);
@@ -112,19 +105,11 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
     public void hook(ExtensionHook extensionHook) {
         super.hook(extensionHook);
 
-//        this.api = new SimpleExampleAPI();
-//        extensionHook.addApiImplementor(this.api);
         extensionHook.addProxyListener(this.listener);
         extensionHook.addSessionListener(this);
-//        knownUrlList = new ArrayList<>();
-//        knownUrlList = new ArrayList<>();
-
-//        knownWebsites = new ArrayList<>();
-//        typoWebsites = new ArrayList<>();
         websites = new ArrayList<>();
 
         createOrLoadUrlFile();
-//        this.listener.
         // As long as we're not running as a daemon
         if (getView() != null) {
             extensionHook.getHookMenu().addToolsMenuItem(getMenuExample());
@@ -222,8 +207,6 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
                     fis.close();
 
                 } catch(Exception e) {
-//                    this.knownWebsites = new ArrayList<>();
-//                    this.typoWebsites = new ArrayList<>();
                     LOGGER.error(e.getMessage());
                     this.websites = new ArrayList<>();
                 }
@@ -250,10 +233,6 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
                     FileOutputStream fos = new FileOutputStream(f);
                     ObjectOutputStream oos = new ObjectOutputStream(fos);
 
-//                    List<Website> websites = new ArrayList<>();
-//                    websites.addAll(this.typoWebsites);
-//                    websites.addAll(this.knownWebsites);
-
                     oos.writeObject(this.websites);
                     oos.close();
                     fos.close();
@@ -263,8 +242,6 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
                     }
 
                 } catch(Exception e) {
-//                    this.knownWebsites = new ArrayList<>();
-//                    this.typoWebsites = new ArrayList<>();
                     LOGGER.error(e.getMessage());
                     this.websites = new ArrayList<>();
                 }
@@ -286,58 +263,8 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
         return popupMsgMenuExample;
     }
 
-
-    public List<String> getKnownUrlList() {
-        return this.getKnownWebsites()
-                .stream()
-                .map(Website::getHost)
-                .collect(Collectors.toList());
-    }
-
-    public void addTypoHost(String host, Website origin) {
-        this.websites.add(new Website(host, origin));
-    }
-
-    public boolean addKnownHost(String host) {
-        for (Website web: this.getKnownWebsites()) {
-            if (web.getHost().equals(host)) {
-                return false;
-            }
-        }
-        this.websites.add(new Website(host));
-        return true;
-    }
-
-    public Website getKnownWebsite(String host) {
-        for(Website web: this.getKnownWebsites()) {
-            if (web.getHost().equals(host)) {
-                return web;
-            }
-        }
-        return null;
-    }
-
-    public boolean isTypoWebsite(String host) {
-        for(Website web: this.getTypoWebsites()) {
-            if (web.getHost().equals(host)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public List<Website> getKnownWebsites() {
-        return websites
-                .stream()
-                .filter(website -> website.getDirectedWebsite() == null)
-                .collect(Collectors.toList());
-    }
-
-    public List<Website> getTypoWebsites() {
-        return websites
-                .stream()
-                .filter(website -> website.getDirectedWebsite() != null)
-                .collect(Collectors.toList());
+    public List<Website> getWebsites() {
+        return websites;
     }
 
     @Override
