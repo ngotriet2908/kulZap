@@ -38,9 +38,13 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.parosproxy.paros.Constant;
+import org.parosproxy.paros.control.Control;
 import org.parosproxy.paros.extension.AbstractPanel;
 import org.parosproxy.paros.extension.ExtensionAdaptor;
 import org.parosproxy.paros.extension.ExtensionHook;
+import org.parosproxy.paros.extension.SessionChangedListener;
+import org.parosproxy.paros.model.Session;
+import org.parosproxy.paros.model.SessionListener;
 import org.parosproxy.paros.view.View;
 import org.zaproxy.addon.securityproxy.proxytests.Website;
 import org.zaproxy.zap.extension.brk.impl.http.ProxyListenerBreak;
@@ -55,7 +59,7 @@ import org.zaproxy.zap.view.ZapMenuItem;
  *
  * @see #hook(ExtensionHook)
  */
-public class ExtensionSecurityProxy extends ExtensionAdaptor {
+public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionChangedListener {
 
     // The name is public so that other extensions can access it
     public static final String NAME = "ExtensionSecurityProxy";
@@ -90,8 +94,10 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
 
 //    private List<String> knownUrlList;
 
-    private List<Website> knownWebsites;
-    private List<Website> typoWebsites;
+//    private List<Website> knownWebsites;
+//    private List<Website> typoWebsites;
+
+    private List<Website> websites;
 
     private static final Logger LOGGER = LogManager.getLogger(ExtensionSecurityProxy.class);
 
@@ -109,12 +115,13 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
 //        this.api = new SimpleExampleAPI();
 //        extensionHook.addApiImplementor(this.api);
         extensionHook.addProxyListener(this.listener);
-
+        extensionHook.addSessionListener(this);
 //        knownUrlList = new ArrayList<>();
 //        knownUrlList = new ArrayList<>();
 
-        knownWebsites = new ArrayList<>();
-        typoWebsites = new ArrayList<>();
+//        knownWebsites = new ArrayList<>();
+//        typoWebsites = new ArrayList<>();
+        websites = new ArrayList<>();
 
         createOrLoadUrlFile();
 //        this.listener.
@@ -209,21 +216,16 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
                     }
                     LOGGER.log(Level.INFO, "Websites size: " + websites.size());
 
-                    this.knownWebsites = websites
-                            .stream()
-                            .filter(website -> website.getDirectedWebsite() == null)
-                            .collect(Collectors.toList());
+                    this.websites.addAll(websites);
 
-                    this.typoWebsites = websites
-                            .stream()
-                            .filter(website -> website.getDirectedWebsite() != null)
-                            .collect(Collectors.toList());
                     ois.close();
-
+                    fis.close();
 
                 } catch(Exception e) {
-                    this.knownWebsites = new ArrayList<>();
-                    this.typoWebsites = new ArrayList<>();
+//                    this.knownWebsites = new ArrayList<>();
+//                    this.typoWebsites = new ArrayList<>();
+                    LOGGER.error(e.getMessage());
+                    this.websites = new ArrayList<>();
                 }
 
             }
@@ -235,7 +237,7 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
 
     private void exportToUrlFile() {
 
-        this.listener.logToOutput("Exporting to url file");
+        LOGGER.log(Level.INFO, "Start Exporting url file");
 
         try {
             File f = new File(Constant.getZapHome(), WEBSITE_FILE);
@@ -248,20 +250,23 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
                     FileOutputStream fos = new FileOutputStream(f);
                     ObjectOutputStream oos = new ObjectOutputStream(fos);
 
-                    List<Website> websites = new ArrayList<>();
-                    websites.addAll(this.typoWebsites);
-                    websites.addAll(this.knownWebsites);
+//                    List<Website> websites = new ArrayList<>();
+//                    websites.addAll(this.typoWebsites);
+//                    websites.addAll(this.knownWebsites);
 
-                    oos.writeObject(websites);
+                    oos.writeObject(this.websites);
                     oos.close();
+                    fos.close();
 
                     for(Website web: websites) {
                         LOGGER.log(Level.INFO, "Writing: " + web.toString());
                     }
 
                 } catch(Exception e) {
-                    this.knownWebsites = new ArrayList<>();
-                    this.typoWebsites = new ArrayList<>();
+//                    this.knownWebsites = new ArrayList<>();
+//                    this.typoWebsites = new ArrayList<>();
+                    LOGGER.error(e.getMessage());
+                    this.websites = new ArrayList<>();
                 }
 
             }
@@ -283,28 +288,28 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
 
 
     public List<String> getKnownUrlList() {
-        return this.knownWebsites
+        return this.getKnownWebsites()
                 .stream()
                 .map(Website::getHost)
                 .collect(Collectors.toList());
     }
 
     public void addTypoHost(String host, Website origin) {
-        this.typoWebsites.add(new Website(host, origin));
+        this.websites.add(new Website(host, origin));
     }
 
     public boolean addKnownHost(String host) {
-        for (Website web: this.knownWebsites) {
+        for (Website web: this.getKnownWebsites()) {
             if (web.getHost().equals(host)) {
                 return false;
             }
         }
-        this.knownWebsites.add(new Website(host));
+        this.websites.add(new Website(host));
         return true;
     }
 
     public Website getKnownWebsite(String host) {
-        for(Website web: this.knownWebsites) {
+        for(Website web: this.getKnownWebsites()) {
             if (web.getHost().equals(host)) {
                 return web;
             }
@@ -313,7 +318,7 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
     }
 
     public boolean isTypoWebsite(String host) {
-        for(Website web: this.typoWebsites) {
+        for(Website web: this.getTypoWebsites()) {
             if (web.getHost().equals(host)) {
                 return true;
             }
@@ -322,15 +327,40 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor {
     }
 
     public List<Website> getKnownWebsites() {
-        return knownWebsites;
+        return websites
+                .stream()
+                .filter(website -> website.getDirectedWebsite() == null)
+                .collect(Collectors.toList());
     }
 
     public List<Website> getTypoWebsites() {
-        return typoWebsites;
+        return websites
+                .stream()
+                .filter(website -> website.getDirectedWebsite() != null)
+                .collect(Collectors.toList());
     }
 
     @Override
     public String getDescription() {
         return Constant.messages.getString(PREFIX + ".desc");
+    }
+
+    @Override
+    public void sessionChanged(Session session) {
+        exportToUrlFile();
+    }
+
+    @Override
+    public void sessionAboutToChange(Session session) {
+    }
+
+    @Override
+    public void sessionScopeChanged(Session session) {
+
+    }
+
+    @Override
+    public void sessionModeChanged(Control.Mode mode) {
+
     }
 }
