@@ -1,6 +1,7 @@
 package org.zaproxy.addon.securityproxy.proxytests;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Website class represents the visited website. Website is model to be compact for storing yet contains
@@ -37,19 +38,11 @@ public class Website implements Serializable {
         return host;
     }
 
-    public void setHost(String host) {
-        this.host = host;
-    }
-
     /**
      * @return the website that should be directed too in case of typo website (null otherwise).
      */
     public Website getDirectedWebsite() {
         return directedWebsite;
-    }
-
-    public void setDirectedWebsite(Website directedWebsite) {
-        this.directedWebsite = directedWebsite;
     }
 
     @Override

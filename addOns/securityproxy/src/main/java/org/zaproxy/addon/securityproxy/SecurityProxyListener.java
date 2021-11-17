@@ -1,29 +1,19 @@
 package org.zaproxy.addon.securityproxy;
 
-import org.apache.commons.httpclient.URI;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.parosproxy.paros.Constant;
 import org.parosproxy.paros.core.proxy.ProxyListener;
 import org.parosproxy.paros.extension.history.ProxyListenerLog;
-import org.parosproxy.paros.model.Model;
-//import org.parosproxy.paros.network.*;
 import org.parosproxy.paros.network.HttpHeader;
 import org.parosproxy.paros.network.HttpMessage;
-import org.parosproxy.paros.network.HttpRequestHeader;
 import org.parosproxy.paros.network.HttpResponseHeader;
 import org.parosproxy.paros.view.View;
 import org.zaproxy.addon.securityproxy.proxytests.TypoSquattingTest;
 import org.zaproxy.addon.securityproxy.proxytests.Website;
-import org.zaproxy.zap.extension.brk.ExtensionBreak;
 
-import java.io.File;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
-import java.util.Scanner;
-import java.util.stream.Collectors;
 
 /**
  * A custom proxy listener that process the requests from user and apply
@@ -54,7 +44,7 @@ public class SecurityProxyListener implements ProxyListener {
     }
 
     /**
-     * When a request is received, the method determind the following:
+     * When a request is received, the method determine the following:
      * - If the hostname is in the saved Typo list (if yes, then extract the redirect host then redirect the user)
      * - If the user indicates in the request that they want to save a typo host as legitimate host -> then save the host to known Host list
      * - If the user indicates in the request that they want to save a typo host with the intended host as preference
@@ -63,8 +53,8 @@ public class SecurityProxyListener implements ProxyListener {
      * -- if no violations found then allow the user to access the page
      * -- show the user a warning page telling them that they violate the Typo Squatting test
      * - For other requests, allow if the hostname pass the Tests
-     * @param msg
-     * @return
+     * @param msg user requests
+     * @return the unmodified request if the hostname is safe and modified in case of violated request
      */
     @Override
     public boolean onHttpRequestSend(HttpMessage msg) {
@@ -82,7 +72,7 @@ public class SecurityProxyListener implements ProxyListener {
                                         + "Content-Type: text/html;charset=utf-8"
                                         + HttpHeader.CRLF
                                         + "Content-Language: en"));
-                        String html = this.typoSquattingTest.getRedirectPage();
+                        String html = this.getTypoSquattingTest().getRedirectPage();
                         msg.setResponseBody(html.replace(REDIRECT_HOST, "https://" + web.getDirectedWebsite().getHost()));
                         msg.getResponseHeader().setContentLength(msg.getResponseBody().length());
                         msg.setTimeSentMillis(new Date().getTime());
@@ -201,8 +191,8 @@ public class SecurityProxyListener implements ProxyListener {
 
     /**
      * Allow all response to be forwarded to the user
-     * @param msg
-     * @return
+     * @param msg user request
+     * @return always allow
      */
     @Override
     public boolean onHttpResponseReceive(HttpMessage msg) {
@@ -216,7 +206,7 @@ public class SecurityProxyListener implements ProxyListener {
 
     /**
      * Log to output in ZAP application
-     * @param msg
+     * @param msg user request
      */
     public void logToOutput(String msg) {
         if (View.isInitialised()) {
@@ -231,5 +221,9 @@ public class SecurityProxyListener implements ProxyListener {
      */
     public ExtensionSecurityProxy getExtension() {
         return extension;
+    }
+
+    public TypoSquattingTest getTypoSquattingTest() {
+        return typoSquattingTest;
     }
 }
