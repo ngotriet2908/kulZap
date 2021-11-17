@@ -70,14 +70,16 @@ public class TypoSquattingTest extends ProxyTest {
     public String isSafeWithReason(HttpMessage msg) {
         String testHostName = extractSearchHost(msg);
 
-        String result1 = HOST_NAME_SAFE_RESULT;
-        String result2 = HOST_NAME_SAFE_RESULT;
-
         for(String knownHostName : this.getKnownUrlList()) {
             if (knownHostName.equals(testHostName)) {
                 return HOST_NAME_SAFE_RESULT;
             }
+        }
 
+        String result1 = HOST_NAME_SAFE_RESULT;
+        String result2 = HOST_NAME_SAFE_RESULT;
+
+        for(String knownHostName : this.getKnownUrlList()) {
             for(TypoSquattingConstraint constraint : constraints) {
                 if (constraint.passedConstraint(testHostName, knownHostName)) { //swap testHostName and knownHostName I think (results will be same)
                     LOGGER.log(Level.INFO, "Constraint " +
