@@ -3,7 +3,11 @@ package org.zaproxy.addon.securityproxy.proxytests.constraints;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class ConstraintTests {
     /**
@@ -96,4 +100,5 @@ public class ConstraintTests {
         TypoSquattingConstraint constraint = new AdjSwappedCharacterConstraint();
         Assertions.assertFalse(constraint.passedConstraint(original,typo));
     }
+
 }
