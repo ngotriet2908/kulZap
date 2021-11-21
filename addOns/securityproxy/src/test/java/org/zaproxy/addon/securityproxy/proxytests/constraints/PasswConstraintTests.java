@@ -34,4 +34,10 @@ public class PasswConstraintTests {
         SafePasswordConstraint constraint = new NumericPasswConstraint();
         Assertions.assertTrue(constraint.passedConstraint(passw));
     }
+    @ParameterizedTest
+    @ValueSource(strings = {"1a2"})
+    void CrackLibFalseTest(String passw){
+        SafePasswordConstraint constraint = new crackLibPasswConstraint();
+        Assertions.assertFalse(constraint.passedConstraint(passw));
+    }
 }
