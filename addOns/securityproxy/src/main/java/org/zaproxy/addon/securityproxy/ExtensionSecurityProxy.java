@@ -47,6 +47,7 @@ import org.parosproxy.paros.model.Session;
 import org.parosproxy.paros.model.SessionListener;
 import org.parosproxy.paros.view.View;
 import org.zaproxy.addon.securityproxy.proxytests.Website;
+import org.zaproxy.addon.securityproxy.proxytests.constraints.PopularPasswConstraint;
 import org.zaproxy.zap.extension.brk.impl.http.ProxyListenerBreak;
 import org.zaproxy.zap.utils.FontUtils;
 import org.zaproxy.zap.view.ZapMenuItem;
@@ -72,14 +73,17 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
             new ImageIcon(ExtensionSecurityProxy.class.getResource(RESOURCES + "/cake.png"));
 
     private static final String WEBSITE_FILE = "example/website.tmp";
-    public static final String HTML_TEMPLATE = "example/warning_page.html";
+    public static final String TYPO_HTML_TEMPLATE = "example/warning_page.html";
+    public static final String PHISHING_HTML_TEMPLATE = "example/phishing_warning_page.html";
+    public static final String PASSWORD_HTML_TEMPLATE = "example/password_warning_page.html";
     public static final String REDIRECT_HTML = "example/redirectPage.html";
+    public static final String NULL = "null";
 
     private ZapMenuItem menuExample;
     private AbstractPanel statusPanel;
     private SecurityProxyListener listener;
-
     private List<Website> websites;
+    public boolean enablePasswordCheck;
 
     private static final Logger LOGGER = LogManager.getLogger(ExtensionSecurityProxy.class);
 
@@ -88,7 +92,7 @@ public class ExtensionSecurityProxy extends ExtensionAdaptor implements SessionC
         setI18nPrefix(PREFIX);
         listener = new SecurityProxyListener(this);
         websites = new ArrayList<>();
-
+        enablePasswordCheck = true;
     }
 
     /**

@@ -14,4 +14,9 @@ public class NumericPasswConstraint implements SafePasswordConstraint{
         }
         return false;
     }
+
+    @Override
+    public String getReason() {
+        return "Password only contains numbers";
+    }
 }

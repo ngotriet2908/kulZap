@@ -5,7 +5,7 @@ import org.zaproxy.addon.securityproxy.proxytests.constraints.crackLib.Packer;
 
 import java.io.IOException;
 
-public class crackLibPasswConstraint implements SafePasswordConstraint{
+public class CrackLibPasswConstraint implements SafePasswordConstraint{
     @Override
     public boolean passedConstraint(String password) {
         try {
@@ -16,5 +16,10 @@ public class crackLibPasswConstraint implements SafePasswordConstraint{
             e.printStackTrace();
         }
         return false;
+    }
+
+    @Override
+    public String getReason() {
+        return "Password fails crackLib";
     }
 }

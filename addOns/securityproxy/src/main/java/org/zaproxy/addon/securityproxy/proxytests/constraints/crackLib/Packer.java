@@ -23,6 +23,8 @@
 package org.zaproxy.addon.securityproxy.proxytests.constraints.crackLib;
 
 
+import org.parosproxy.paros.Constant;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -56,7 +58,9 @@ public class Packer implements java.io.Closeable {
 
   protected int block = -1;
 
-  private static String LOCATION = "src/main/zapHomeFiles/example/";
+  private static String LOCATION1 = "src/main/zapHomeFiles/example/";
+  private static String LOCATION= "example/";
+
 
   public Packer(String name, String mode) throws IOException
   {
@@ -66,6 +70,13 @@ public class Packer implements java.io.Closeable {
       {
         throw new IllegalArgumentException("Mode must be \"rw\" or \"r\"");
       }
+
+    File f = new File(LOCATION1);
+    if (f.exists()) {
+      LOCATION = LOCATION1;
+    } else {
+      LOCATION = Constant.getZapHome() + "example/";
+    }
 
     if (mode.equals("rw"))
       {

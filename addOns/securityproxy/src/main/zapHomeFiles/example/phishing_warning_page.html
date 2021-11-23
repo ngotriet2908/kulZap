@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Warning</title>
+</head>
+<body>
+    <h2>Warning: Phishing website detected</h2>
+    <h4>The page you are attempting to log in violate phishing test </h4>
+    <h4>The credential with username [Username] is already used by [CreUsedHost]</h4>
+    <button onclick="sendPostRequest()">Click here to proceed the login to page [PhishingHost]</button>
+    <button onclick="goBack()">Click here to cancel your login</button>
+
+    <script>
+        function sendPostRequest() {
+            const xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function() {
+                if (xmlHttp.readyState === 4 && xmlHttp.status === 200) {
+                    console.log("Redirecting")
+                    location.reload()
+                }
+            }
+            xmlHttp.open("GET", "http://[PhishingHost]/zapgroup8addcredential;[UUID]", true) // true for asynchronous
+            xmlHttp.send(null);
+        }
+
+        function goBack() {
+            window.history.back()
+        }
+    </script>
+
+</body>
+</html>

@@ -91,11 +91,11 @@ public class TypoSquattingTest extends ProxyTest {
             }
         }
 
-        if (msg.getRequestHeader().getHostName().equals(testHostName)) {
+        if (uriStringToHostName(msg.getRequestHeader().getURI().toString()).equals(testHostName)) {
             return result1;
         }
 
-        testHostName = msg.getRequestHeader().getHostName();
+        testHostName = uriStringToHostName(msg.getRequestHeader().getURI().toString());
         for(String knownHostName : this.getKnownUrlList()) {
             if (knownHostName.equals(testHostName)) {
                 return HOST_NAME_SAFE_RESULT;
@@ -126,7 +126,11 @@ public class TypoSquattingTest extends ProxyTest {
      */
     public String uriStringToHostName(String uri) {
         try {
-            return new URI(uri, true, "UTF-8").getHost();
+            return new URI(uri, true, "UTF-8")
+                    .getHost()
+                    .replace("www.", "")
+                    .replace("https://", "")
+                    .replace("http://", "");
         } catch (Exception e) {
             LOGGER.log(Level.ERROR, e.getMessage());
         }
@@ -149,10 +153,13 @@ public class TypoSquattingTest extends ProxyTest {
             } else if (ref != null) {
                 testHostName = new URI(ref, true, "UTF-8").getHost();
             } else {
-                testHostName = msg.getRequestHeader().getHostName();
+                testHostName = uriStringToHostName(msg.getRequestHeader().getURI().toString());
             }
 
-            return testHostName;
+            return testHostName
+                    .replace("www.", "")
+                    .replace("https://", "")
+                    .replace("http://", "");
         } catch (Exception e) {
             LOGGER.log(Level.ERROR, e.getMessage());
         }
@@ -179,7 +186,7 @@ public class TypoSquattingTest extends ProxyTest {
         String originPage = args[1];
 
         try {
-            File ff = new File(Constant.getZapHome(), ExtensionSecurityProxy.HTML_TEMPLATE);
+            File ff = new File(Constant.getZapHome(), ExtensionSecurityProxy.TYPO_HTML_TEMPLATE);
             Scanner myReader = new Scanner(ff);
             StringBuilder html_content = new StringBuilder();
             while (myReader.hasNextLine()) {

@@ -1,7 +1,8 @@
 package org.zaproxy.addon.securityproxy.proxytests;
 
 import java.io.Serializable;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Website class represents the visited website. Website is model to be compact for storing yet contains
@@ -10,6 +11,7 @@ import java.util.Objects;
 public class Website implements Serializable {
     private String host;
     private Website directedWebsite;
+    private List<Credential> credentials;
 
     static final long serialVersionUID = 42L;
 
@@ -19,6 +21,7 @@ public class Website implements Serializable {
      */
     public Website(String host) {
         this.host = host;
+        this.credentials = new ArrayList<>();
     }
 
     /**
@@ -29,6 +32,7 @@ public class Website implements Serializable {
     public Website(String host, Website directedWebsite) {
         this.host = host;
         this.directedWebsite = directedWebsite;
+        this.credentials = new ArrayList<>();
     }
 
     /**
@@ -45,11 +49,16 @@ public class Website implements Serializable {
         return directedWebsite;
     }
 
+    public List<Credential> getCredentials() {
+        return credentials;
+    }
+
     @Override
     public String toString() {
         return "Website{" +
                 "host='" + host + '\'' +
                 ", directedWebsite=" + directedWebsite +
+                ", credentials=" + credentials +
                 '}';
     }
 }
